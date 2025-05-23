@@ -1,0 +1,11 @@
+{
+    "servers": {
+        "keyshade-mcp-test": {
+            "type": "stdio",
+            "command": "node",
+            "args": [
+                "/home/sambit/keyshade_org/keyshade-mcp/build/index.js"
+            ]
+        }
+    }
+}
