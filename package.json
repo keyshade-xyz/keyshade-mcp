@@ -4,6 +4,28 @@
   "description": "",
   "main": "index.js",
   "type": "module",
+  "description": "Keyshade MCP - Model Context Protocol implementation for Keyshade",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keyshade-xyz/keyshade-mcp.git"
+  },
+  "keywords": [
+    "keyshade",
+    "mcp",
+    "model-context-protocol",
+    "secret management",
+    "encryption",
+    "decryption",
+    "key management",
+    "data protection",
+    "security",
+    "privacy",
+    "open-source",
+    "typescript",
+    "nodejs",
+    "sdk",
+    "api",
+  ],
   "bin": {
     "keyshade-mcp": "./build/index.js"
   },
