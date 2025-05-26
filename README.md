@@ -8,7 +8,7 @@ To get started with Keyshade MCP server, follow these steps:
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/keyshade-oss/keyshade-mcp.git
+   git clone https://github.com/keyshade-xyz/keyshade-mcp.git
    cd keyshade-mcp
    ```
 
