@@ -11,7 +11,6 @@ export const PaginationMetadataSchema = z.object({
     last: z.string()
   })
 });
-
 // Paginated response wrapper
 export const PaginatedResponseSchema = <T extends z.ZodTypeAny>(itemSchema: T) =>
   z.object({
