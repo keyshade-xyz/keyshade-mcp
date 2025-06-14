@@ -18,6 +18,8 @@ export const PaginatedResponseSchema = <T extends z.ZodTypeAny>(itemSchema: T) =
     metadata: PaginationMetadataSchema
   });
 
+// --- GET Request/Response Schemas ---
+
 // User schema
 export const KeyshadeUserSchema = z.object({
   id: z.string(),
@@ -140,14 +142,14 @@ export const VariableVersionSchema = z.object({
     name: z.string(),
     id: z.string(),
     slug: z.string()
-  }),
+  }).optional(),
   createdBy: KeyshadeUserSchema.pick({
     id: true,
     name: true,
     profilePictureUrl: true
-  }),
-  createdOn: z.string()
-});
+  }).optional(),
+  createdOn: z.string().optional()
+}).passthrough();
 
 // Variable schema
 export const KeyshadeVariableSchema = z.object({
@@ -161,14 +163,14 @@ export const KeyshadeVariableSchema = z.object({
     id: true,
     name: true,
     profilePictureUrl: true
-  }).partial(),
+  }).partial().optional(),
   project: z.object({
     id: z.string(),
     name: z.string(),
     slug: z.string()
   }).optional(),
   versions: z.array(VariableVersionSchema).optional()
-});
+}).passthrough();
 
 // API Key schema
 export const KeyshadeApiKeySchema = z.object({
@@ -237,6 +239,71 @@ export const KeyshadeWorkspaceMemberSchema = z.object({
   invitationAccepted: z.boolean()
 });
 
+// --- CREATE REQUEST/RESPONSE SCHEMAS ---
+
+// Create Workspace
+export const CreateWorkspaceRequestSchema = z.object({
+  name: z.string(),
+  icon: z.string().optional(),
+});
+
+// Create Project
+export const CreateProjectRequestSchema = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+  storePrivateKey: z.boolean().optional(),
+  accessLevel: z.enum(['GLOBAL', 'INTERNAL', 'PRIVATE']).optional(),
+  environments: z.array(z.object({
+    name: z.string(),
+    description: z.string().optional(),
+  })).optional(),
+});
+
+// Fork Project
+export const ForkProjectRequestSchema = z.object({
+  name: z.string(),
+});
+
+// Create Environment
+export const CreateEnvironmentRequestSchema = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+});
+
+// Create Secret
+export const CreateSecretRequestSchema = z.object({
+  name: z.string(),
+  note: z.string().optional(),
+  rotateAfter: z.string().optional(),
+  entries: z.array(z.object({
+    environmentSlug: z.string(),
+    value: z.string(),
+  })),
+});
+
+// Create Variable
+export const CreateVariableRequestSchema = z.object({
+  name: z.string(),
+  note: z.string().optional(),
+  entries: z.array(z.object({
+    environmentSlug: z.string(),
+    value: z.string(),
+  })),
+});
+
+// Create Workspace Role
+export const CreateWorkspaceRoleRequestSchema = z.object({
+  workspaceSlug: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  colorCode: z.string().optional(),
+  authorities: z.array(z.string()).optional(),
+  projectEnvironments: z.array(z.object({
+    projectSlug: z.string(),
+    environmentSlugs: z.array(z.string()).optional(),
+  })).optional(),
+});
+
 // Export response schemas
 export const KeyshadeWorkspacesResponse = PaginatedResponseSchema(KeyshadeWorkspaceSchema);
 export const KeyshadeProjectsResponse = PaginatedResponseSchema(KeyshadeProjectSchema);
@@ -247,3 +314,12 @@ export const KeyshadeApiKeysResponse = PaginatedResponseSchema(KeyshadeApiKeySch
 export const KeyshadeEventsResponse = PaginatedResponseSchema(KeyshadeEventSchema);
 export const KeyshadeWorkspaceRolesResponse = PaginatedResponseSchema(KeyshadeWorkspaceRoleSchema);
 export const KeyshadeWorkspaceMembersResponse = PaginatedResponseSchema(KeyshadeWorkspaceMemberSchema);
+export const CreateWorkspaceResponseSchema = KeyshadeWorkspaceSchema;
+export const CreateProjectResponseSchema = KeyshadeProjectSchema;
+export const ForkProjectResponseSchema = KeyshadeProjectSchema;
+export const CreateEnvironmentResponseSchema = KeyshadeEnvironmentSchema;
+export const CreateSecretResponseSchema = KeyshadeSecretSchema;
+export const CreateVariableResponseSchema = z.object({
+  variable: KeyshadeVariableSchema
+}).or(KeyshadeVariableSchema);
+export const CreateWorkspaceRoleResponseSchema = KeyshadeWorkspaceRoleSchema;

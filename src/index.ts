@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z, ZodRawShape } from "zod";
-import fetch from 'node-fetch';
+import fetch, { RequestInit } from 'node-fetch';
 import {
   KeyshadeUserSchema,
   KeyshadeWorkspaceSchema,
@@ -17,13 +17,27 @@ import {
   KeyshadeApiKeysResponse,
   KeyshadeEventsResponse,
   KeyshadeWorkspaceRolesResponse,
-  KeyshadeWorkspaceMembersResponse
+  KeyshadeWorkspaceMembersResponse,
+  CreateWorkspaceRequestSchema,
+  CreateWorkspaceResponseSchema,
+  CreateProjectRequestSchema,
+  CreateProjectResponseSchema,
+  ForkProjectRequestSchema,
+  ForkProjectResponseSchema,
+  CreateEnvironmentRequestSchema,
+  CreateEnvironmentResponseSchema,
+  CreateSecretRequestSchema,
+  CreateSecretResponseSchema,
+  CreateVariableRequestSchema,
+  CreateVariableResponseSchema,
+  CreateWorkspaceRoleRequestSchema,
+  CreateWorkspaceRoleResponseSchema
 } from "./schema.js";
 
 const KEYSHADE_BASE_URL = process.env.KEYSHADE_API_URL || "https://api.keyshade.xyz";
 const KEYSHADE_API_KEY = process.env.KEYSHADE_API_KEY;
 
-async function fetchKeyshadeApi(endpoint: string, schema: z.ZodTypeAny): Promise<any> {
+async function fetchKeyshadeApi(endpoint: string, schema: z.ZodTypeAny, fetchOptions?: RequestInit): Promise<any> {
   if (!KEYSHADE_API_KEY) {
     return {
       content: [{ 
@@ -35,13 +49,22 @@ async function fetchKeyshadeApi(endpoint: string, schema: z.ZodTypeAny): Promise
   }
 
   try {
-    const response = await fetch(`${KEYSHADE_BASE_URL}${endpoint}`, {
+    const defaultOptions: RequestInit = {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
         'x-keyshade-token': KEYSHADE_API_KEY,
       },
-    });
+    };
+    const options: RequestInit = {
+      ...defaultOptions,
+      ...fetchOptions,
+      headers: {
+        ...defaultOptions.headers,
+        ...(fetchOptions && fetchOptions.headers),
+      },
+    };
+    const response = await fetch(`${KEYSHADE_BASE_URL}${endpoint}`, options);
 
     if (!response.ok) {
       return {
@@ -52,29 +75,23 @@ async function fetchKeyshadeApi(endpoint: string, schema: z.ZodTypeAny): Promise
         isError: true
       };
     }
-
     const data = await response.json();
-    const parsedData = schema.safeParse(data);
-
-    if (!parsedData.success) {
+    const parsed = schema.safeParse(data);
+    if (!parsed.success) {
       return {
-        content: [{ 
-          type: "text", 
-          text: `API response validation failed: ${parsedData.error.message}` 
-        }],
+        content: [{ type: "text", text: `Schema validation failed: ${JSON.stringify(parsed.error.issues)}` }],
         isError: true
       };
     }
-
-    return {
-      content: [{ type: "text", text: JSON.stringify(parsedData.data, null, 2) }],
-    };
-  } catch (error: any) {
     return {
       content: [{ 
         type: "text", 
-        text: `Error fetching from Keyshade API: ${error.message}` 
-      }],
+        text: JSON.stringify(parsed.data, null, 2) 
+      }]
+    };
+  } catch (error: any) {
+    return {
+      content: [{ type: "text", text: `API request error: ${error.message}` }],
       isError: true
     };
   }
@@ -423,6 +440,126 @@ server.tool(
       secrets: z.array(KeyshadeSecretSchema),
       variables: z.array(KeyshadeVariableSchema)
     }));
+  }
+);
+
+// Tool for creating a new workspace
+server.tool(
+  "create_workspace",
+  "Creates a new workspace in Keyshade",
+  CreateWorkspaceRequestSchema.shape,
+  async ({ name, icon }) => {
+    return fetchKeyshadeApi(
+      "/api/workspace",
+      CreateWorkspaceResponseSchema,
+      {
+        method: "POST",
+        body: JSON.stringify({ name, icon }),
+      }
+    );
+  }
+);
+
+// Tool for creating a new project in a workspace
+server.tool(
+  "create_project",
+  "Creates a new project in a workspace",
+  CreateProjectRequestSchema.extend({ workspaceSlug: z.string() }).shape,
+  async ({ workspaceSlug, ...data }) => {
+    return fetchKeyshadeApi(
+      `/api/project/${workspaceSlug}`,
+      CreateProjectResponseSchema,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      }
+    );
+  }
+);
+
+// Tool for forking an existing project
+server.tool(
+  "fork_project",
+  "Forks an existing project",
+  ForkProjectRequestSchema.extend({ projectSlug: z.string() }).shape,
+  async ({ projectSlug, ...data }) => {
+    return fetchKeyshadeApi(
+      `/api/project/${projectSlug}/fork`,
+      ForkProjectResponseSchema,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      }
+    );
+  }
+);
+
+// Tool for creating a new environment
+server.tool(
+  "create_environment",
+  "Creates a new environment in a project",
+  CreateEnvironmentRequestSchema.extend({ projectSlug: z.string() }).shape,
+  async ({ projectSlug, ...data }) => {
+    return fetchKeyshadeApi(
+      `/api/environment/${projectSlug}`,
+      CreateEnvironmentResponseSchema,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      }
+    );
+  }
+);
+
+// Tool for creating a new secret
+server.tool(
+  "create_secret",
+  "Creates a new secret in a project",
+  CreateSecretRequestSchema.extend({ projectSlug: z.string() }).shape,
+  async ({ projectSlug, ...data }) => {
+    return fetchKeyshadeApi(
+      `/api/secret/${projectSlug}`,
+      CreateSecretResponseSchema,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      }
+    );
+  }
+);
+
+// Tool for creating a new variable
+server.tool(
+  "create_variable",
+  "Creates a new variable in a project",
+  CreateVariableRequestSchema.extend({ projectSlug: z.string() }).shape,
+  async ({ projectSlug, ...data }) => {
+    return fetchKeyshadeApi(
+      `/api/variable/${projectSlug}`,
+      CreateVariableResponseSchema,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      }
+    );
+  }
+);
+
+// Tool for creating a new workspace role
+server.tool(
+  "create_workspace_role",
+  "Creates a new workspace role",
+  CreateWorkspaceRoleRequestSchema.shape,
+  async (data) => {
+    const { workspaceSlug, ...body } = data;
+    return fetchKeyshadeApi(
+      `/api/workspace-role/${workspaceSlug}`,
+      CreateWorkspaceRoleResponseSchema,
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      }
+    );
   }
 );
 
