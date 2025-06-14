@@ -358,6 +358,89 @@ export const LeaveWorkspaceRequestSchema = z.object({
   workspaceSlug: z.string(),
 });
 
+// --- UPDATE Request Schemas ---
+
+// Update Environment
+export const UpdateEnvironmentRequestSchema = z.object({
+  slug: z.string().describe("Environment slug to update"),
+  name: z.string().optional().describe("New environment name"),
+  description: z.string().optional().describe("New environment description"),
+});
+
+// Update Project
+export const UpdateProjectRequestSchema = z.object({
+  projectSlug: z.string().describe("Project slug to update"),
+  name: z.string().optional().describe("New project name"),
+  description: z.string().optional().describe("New project description"),
+  storePrivateKey: z.boolean().optional().describe("Whether to store private key"),
+  privateKey: z.string().optional().describe("Private key if storePrivateKey is true"),
+  regenerateKeyPair: z.boolean().optional().describe("Whether to regenerate key pair"),
+  accessLevel: z.enum(['GLOBAL', 'INTERNAL', 'PRIVATE']).optional().describe("Project access level"),
+});
+
+// Sync Fork
+export const SyncForkRequestSchema = z.object({
+  projectSlug: z.string().describe("Forked project slug to sync"),
+  hardSync: z.boolean().optional().describe("Whether to perform hard sync (replaces everything)"),
+});
+
+// Update Secret
+export const UpdateSecretRequestSchema = z.object({
+  secretSlug: z.string().describe("Secret slug to update"),
+  name: z.string().optional().describe("New secret name"),
+  note: z.string().optional().describe("New secret note"),
+  rotateAfter: z.string().optional().describe("Rotation interval (24, 168, 720, 8760, never)"),
+  entries: z.array(z.object({
+    environmentSlug: z.string(),
+    value: z.string(),
+  })).optional().describe("New secret values for environments"),
+});
+
+// Rollback Secret
+export const RollbackSecretRequestSchema = z.object({
+  secretSlug: z.string().describe("Secret slug to rollback"),
+  environmentSlug: z.string().describe("Environment to rollback in"),
+  version: z.number().describe("Version number to rollback to"),
+});
+
+// Update Variable
+export const UpdateVariableRequestSchema = z.object({
+  variableSlug: z.string().describe("Variable slug to update"),
+  name: z.string().optional().describe("New variable name"),
+  note: z.string().optional().describe("New variable note"),
+  entries: z.array(z.object({
+    environmentSlug: z.string(),
+    value: z.string(),
+  })).optional().describe("New variable values for environments"),
+});
+
+// Rollback Variable
+export const RollbackVariableRequestSchema = z.object({
+  variableSlug: z.string().describe("Variable slug to rollback"),
+  environmentSlug: z.string().describe("Environment to rollback in"),
+  version: z.number().describe("Version number to rollback to"),
+});
+
+// Update Workspace
+export const UpdateWorkspaceRequestSchema = z.object({
+  workspaceSlug: z.string().describe("Workspace slug to update"),
+  name: z.string().optional().describe("New workspace name"),
+  icon: z.string().optional().describe("New workspace icon"),
+});
+
+// Update Workspace Role
+export const UpdateWorkspaceRoleRequestSchema = z.object({
+  workspaceRoleSlug: z.string().describe("Workspace role slug to update"),
+  name: z.string().optional().describe("New role name"),
+  description: z.string().optional().describe("New role description"),
+  colorCode: z.string().optional().describe("New role color code"),
+  authorities: z.array(z.string()).optional().describe("New role authorities"),
+  projectEnvironments: z.array(z.object({
+    projectSlug: z.string(),
+    environmentSlugs: z.array(z.string()).optional(),
+  })).optional().describe("Project-environment access control"),
+});
+
 
 // Export response schemas
 export const KeyshadeWorkspacesResponse = PaginatedResponseSchema(KeyshadeWorkspaceSchema);
@@ -378,6 +461,25 @@ export const CreateVariableResponseSchema = z.object({
   variable: KeyshadeVariableSchema
 }).or(KeyshadeVariableSchema);
 export const CreateWorkspaceRoleResponseSchema = KeyshadeWorkspaceRoleSchema;
+export const UpdateEnvironmentResponseSchema = KeyshadeEnvironmentSchema;
+export const UpdateProjectResponseSchema = KeyshadeProjectSchema;
+export const SyncForkResponseSchema = KeyshadeProjectSchema;
+export const UpdateSecretResponseSchema = z.object({
+  secret: KeyshadeSecretSchema,
+  updatedVersions: z.array(SecretVersionSchema).optional()
+}).or(KeyshadeSecretSchema);
+export const RollbackSecretResponseSchema = z.object({
+  count: z.number().optional()
+}).or(z.any());
+export const UpdateVariableResponseSchema = z.object({
+  variable: KeyshadeVariableSchema,
+  updatedVersions: z.array(VariableVersionSchema).optional()
+}).or(KeyshadeVariableSchema);
+export const RollbackVariableResponseSchema = z.object({
+  count: z.number().optional()
+}).or(z.any());
+export const UpdateWorkspaceResponseSchema = KeyshadeWorkspaceSchema;
+export const UpdateWorkspaceRoleResponseSchema = KeyshadeWorkspaceRoleSchema;
 export const DeleteResponseSchema = z.union([
   z.object({
     message: z.string().optional(),

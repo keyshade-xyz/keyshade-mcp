@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z, ZodRawShape } from "zod";
@@ -32,6 +33,24 @@ import {
   CreateVariableResponseSchema,
   CreateWorkspaceRoleRequestSchema,
   CreateWorkspaceRoleResponseSchema,
+  UpdateEnvironmentRequestSchema,
+  UpdateEnvironmentResponseSchema,
+  UpdateProjectRequestSchema,
+  UpdateProjectResponseSchema,
+  SyncForkRequestSchema,
+  SyncForkResponseSchema,
+  UpdateSecretRequestSchema,
+  UpdateSecretResponseSchema,
+  RollbackSecretRequestSchema,
+  RollbackSecretResponseSchema,
+  UpdateVariableRequestSchema,
+  UpdateVariableResponseSchema,
+  RollbackVariableRequestSchema,
+  RollbackVariableResponseSchema,
+  UpdateWorkspaceRequestSchema,
+  UpdateWorkspaceResponseSchema,
+  UpdateWorkspaceRoleRequestSchema,
+  UpdateWorkspaceRoleResponseSchema,
   DeleteEnvironmentRequestSchema,
   DeleteProjectRequestSchema,
   UnlinkForkRequestSchema,
@@ -777,6 +796,196 @@ server.tool(
       DeleteResponseSchema,
       {
         method: "DELETE",
+      }
+    );
+  }
+);
+
+// --- UPDATE TOOLS ---
+
+// Tool for updating an environment
+server.tool(
+  "update_environment",
+  "Updates an environment in a project",
+  UpdateEnvironmentRequestSchema.shape,
+  async ({ slug, name, description }) => {
+    const body: any = {};
+    if (name !== undefined) body.name = name;
+    if (description !== undefined) body.description = description;
+
+    return fetchKeyshadeApi(
+      `/api/environment/${slug}`,
+      UpdateEnvironmentResponseSchema,
+      {
+        method: "PUT",
+        body: JSON.stringify(body),
+      }
+    );
+  }
+);
+
+// Tool for updating a project
+server.tool(
+  "update_project",
+  "Updates a project",
+  UpdateProjectRequestSchema.shape,
+  async ({ projectSlug, name, description, storePrivateKey, privateKey, regenerateKeyPair, accessLevel }) => {
+    const body: any = {};
+    if (name !== undefined) body.name = name;
+    if (description !== undefined) body.description = description;
+    if (storePrivateKey !== undefined) body.storePrivateKey = storePrivateKey;
+    if (privateKey !== undefined) body.privateKey = privateKey;
+    if (regenerateKeyPair !== undefined) body.regenerateKeyPair = regenerateKeyPair;
+    if (accessLevel !== undefined) body.accessLevel = accessLevel;
+
+    return fetchKeyshadeApi(
+      `/api/project/${projectSlug}`,
+      UpdateProjectResponseSchema,
+      {
+        method: "PUT",
+        body: JSON.stringify(body),
+      }
+    );
+  }
+);
+
+// Tool for syncing a forked project
+server.tool(
+  "sync_fork",
+  "Syncs a forked project with its parent",
+  SyncForkRequestSchema.shape,
+  async ({ projectSlug, hardSync = false }) => {
+    const body: any = {};
+    if (hardSync !== undefined) body.hardSync = hardSync;
+
+    return fetchKeyshadeApi(
+      `/api/project/${projectSlug}/sync`,
+      SyncForkResponseSchema,
+      {
+        method: "PUT",
+        body: JSON.stringify(body),
+      }
+    );
+  }
+);
+
+// Tool for updating a secret
+server.tool(
+  "update_secret",
+  "Updates a secret in a project",
+  UpdateSecretRequestSchema.shape,
+  async ({ secretSlug, name, note, rotateAfter, entries }) => {
+    const body: any = {};
+    if (name !== undefined) body.name = name;
+    if (note !== undefined) body.note = note;
+    if (rotateAfter !== undefined) body.rotateAfter = rotateAfter;
+    if (entries !== undefined) body.entries = entries;
+
+    return fetchKeyshadeApi(
+      `/api/secret/${secretSlug}`,
+      UpdateSecretResponseSchema,
+      {
+        method: "PUT",
+        body: JSON.stringify(body),
+      }
+    );
+  }
+);
+
+// Tool for rolling back a secret
+server.tool(
+  "rollback_secret",
+  "Rolls back a secret to a previous version",
+  RollbackSecretRequestSchema.shape,
+  async ({ secretSlug, environmentSlug, version }) => {
+    return fetchKeyshadeApi(
+      `/api/secret/${secretSlug}/rollback/${version}?environmentSlug=${environmentSlug}`,
+      RollbackSecretResponseSchema,
+      {
+        method: "PUT",
+      }
+    );
+  }
+);
+
+// Tool for updating a variable
+server.tool(
+  "update_variable",
+  "Updates a variable in a project",
+  UpdateVariableRequestSchema.shape,
+  async ({ variableSlug, name, note, entries }) => {
+    const body: any = {};
+    if (name !== undefined) body.name = name;
+    if (note !== undefined) body.note = note;
+    if (entries !== undefined) body.entries = entries;
+
+    return fetchKeyshadeApi(
+      `/api/variable/${variableSlug}`,
+      UpdateVariableResponseSchema,
+      {
+        method: "PUT",
+        body: JSON.stringify(body),
+      }
+    );
+  }
+);
+
+// Tool for rolling back a variable
+server.tool(
+  "rollback_variable",
+  "Rolls back a variable to a previous version",
+  RollbackVariableRequestSchema.shape,
+  async ({ variableSlug, environmentSlug, version }) => {
+    return fetchKeyshadeApi(
+      `/api/variable/${variableSlug}/rollback/${version}?environmentSlug=${environmentSlug}`,
+      RollbackVariableResponseSchema,
+      {
+        method: "PUT",
+      }
+    );
+  }
+);
+
+// Tool for updating a workspace
+server.tool(
+  "update_workspace",
+  "Updates a workspace",
+  UpdateWorkspaceRequestSchema.shape,
+  async ({ workspaceSlug, name, icon }) => {
+    const body: any = {};
+    if (name !== undefined) body.name = name;
+    if (icon !== undefined) body.icon = icon;
+
+    return fetchKeyshadeApi(
+      `/api/workspace/${workspaceSlug}`,
+      UpdateWorkspaceResponseSchema,
+      {
+        method: "PUT",
+        body: JSON.stringify(body),
+      }
+    );
+  }
+);
+
+// Tool for updating a workspace role
+server.tool(
+  "update_workspace_role",
+  "Updates a workspace role",
+  UpdateWorkspaceRoleRequestSchema.shape,
+  async ({ workspaceRoleSlug, name, description, colorCode, authorities, projectEnvironments }) => {
+    const body: any = {};
+    if (name !== undefined) body.name = name;
+    if (description !== undefined) body.description = description;
+    if (colorCode !== undefined) body.colorCode = colorCode;
+    if (authorities !== undefined) body.authorities = authorities;
+    if (projectEnvironments !== undefined) body.projectEnvironments = projectEnvironments;
+
+    return fetchKeyshadeApi(
+      `/api/workspace-role/${workspaceRoleSlug}`,
+      UpdateWorkspaceRoleResponseSchema,
+      {
+        method: "PUT",
+        body: JSON.stringify(body),
       }
     );
   }
