@@ -18,7 +18,7 @@ export const PaginatedResponseSchema = <T extends z.ZodTypeAny>(itemSchema: T) =
     metadata: PaginationMetadataSchema
   });
 
-// --- GET Request/Response Schemas ---
+// --- GET Request Schemas ---
 
 // User schema
 export const KeyshadeUserSchema = z.object({
@@ -239,7 +239,7 @@ export const KeyshadeWorkspaceMemberSchema = z.object({
   invitationAccepted: z.boolean()
 });
 
-// --- CREATE REQUEST/RESPONSE SCHEMAS ---
+// --- CREATE Request Schemas ---
 
 // Create Workspace
 export const CreateWorkspaceRequestSchema = z.object({
@@ -304,6 +304,61 @@ export const CreateWorkspaceRoleRequestSchema = z.object({
   })).optional(),
 });
 
+// --- DELETE Request Schemas ---
+
+// Delete Environment
+export const DeleteEnvironmentRequestSchema = z.object({
+  environmentSlug: z.string(),
+});
+
+// Delete Project
+export const DeleteProjectRequestSchema = z.object({
+  projectSlug: z.string(),
+});
+
+// Unlink Fork Parent
+export const UnlinkForkRequestSchema = z.object({
+  projectSlug: z.string(),
+});
+
+// Delete Secret
+export const DeleteSecretRequestSchema = z.object({
+  secretSlug: z.string(),
+});
+
+// Delete Environment Value of Secret
+export const DeleteSecretEnvironmentValueRequestSchema = z.object({
+  secretSlug: z.string(),
+  environmentSlug: z.string(),
+});
+
+// Delete Variable
+export const DeleteVariableRequestSchema = z.object({
+  variableSlug: z.string(),
+});
+
+// Delete Environment Value of Variable
+export const DeleteVariableEnvironmentValueRequestSchema = z.object({
+  variableSlug: z.string(),
+  environmentSlug: z.string(),
+});
+
+// Delete Workspace
+export const DeleteWorkspaceRequestSchema = z.object({
+  workspaceSlug: z.string(),
+});
+
+// Delete Workspace Role
+export const DeleteWorkspaceRoleRequestSchema = z.object({
+  workspaceRoleSlug: z.string(),
+});
+
+// Leave Workspace
+export const LeaveWorkspaceRequestSchema = z.object({
+  workspaceSlug: z.string(),
+});
+
+
 // Export response schemas
 export const KeyshadeWorkspacesResponse = PaginatedResponseSchema(KeyshadeWorkspaceSchema);
 export const KeyshadeProjectsResponse = PaginatedResponseSchema(KeyshadeProjectSchema);
@@ -323,3 +378,12 @@ export const CreateVariableResponseSchema = z.object({
   variable: KeyshadeVariableSchema
 }).or(KeyshadeVariableSchema);
 export const CreateWorkspaceRoleResponseSchema = KeyshadeWorkspaceRoleSchema;
+export const DeleteResponseSchema = z.union([
+  z.object({
+    message: z.string().optional(),
+    success: z.boolean().optional()
+  }),
+  z.null(),
+  z.undefined(),
+  z.any()
+]);

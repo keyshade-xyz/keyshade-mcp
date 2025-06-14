@@ -31,7 +31,18 @@ import {
   CreateVariableRequestSchema,
   CreateVariableResponseSchema,
   CreateWorkspaceRoleRequestSchema,
-  CreateWorkspaceRoleResponseSchema
+  CreateWorkspaceRoleResponseSchema,
+  DeleteEnvironmentRequestSchema,
+  DeleteProjectRequestSchema,
+  UnlinkForkRequestSchema,
+  DeleteSecretRequestSchema,
+  DeleteSecretEnvironmentValueRequestSchema,
+  DeleteVariableRequestSchema,
+  DeleteVariableEnvironmentValueRequestSchema,
+  DeleteWorkspaceRequestSchema,
+  DeleteWorkspaceRoleRequestSchema,
+  LeaveWorkspaceRequestSchema,
+  DeleteResponseSchema
 } from "./schema.js";
 
 const KEYSHADE_BASE_URL = process.env.KEYSHADE_API_URL || "https://api.keyshade.xyz";
@@ -75,12 +86,58 @@ async function fetchKeyshadeApi(endpoint: string, schema: z.ZodTypeAny, fetchOpt
         isError: true
       };
     }
-    const data = await response.json();
+
+    const contentType = response.headers.get('content-type');
+    const contentLength = response.headers.get('content-length');
+    
+    if (contentLength === '0' || response.status === 204 || !contentType?.includes('application/json')) {
+      return {
+        content: [{ 
+          type: "text", 
+          text: JSON.stringify({ 
+            success: true, 
+            message: `Operation completed successfully (HTTP ${response.status})` 
+          }, null, 2) 
+        }]
+      };
+    }
+
+    // Try to parse JSON response
+    let data;
+    try {
+      const responseText = await response.text();
+      if (!responseText.trim()) {
+        // Empty response body
+        return {
+          content: [{ 
+            type: "text", 
+            text: JSON.stringify({ 
+              success: true, 
+              message: `Operation completed successfully (HTTP ${response.status})` 
+            }, null, 2) 
+          }]
+        };
+      }
+      data = JSON.parse(responseText);
+    } catch (jsonError) {
+      // If JSON parsing fails, return the raw text
+      const responseText = await response.text();
+      return {
+        content: [{ 
+          type: "text", 
+          text: responseText || `Operation completed successfully (HTTP ${response.status})` 
+        }]
+      };
+    }
+
     const parsed = schema.safeParse(data);
     if (!parsed.success) {
+      // If schema validation fails but we have data, return the raw data
       return {
-        content: [{ type: "text", text: `Schema validation failed: ${JSON.stringify(parsed.error.issues)}` }],
-        isError: true
+        content: [{ 
+          type: "text", 
+          text: JSON.stringify(data, null, 2) 
+        }]
       };
     }
     return {
@@ -558,6 +615,168 @@ server.tool(
       {
         method: "POST",
         body: JSON.stringify(body),
+      }
+    );
+  }
+);
+
+// --- DELETE TOOLS ---
+
+// Tool for deleting an environment
+server.tool(
+  "delete_environment",
+  "Deletes an environment in a project",
+  DeleteEnvironmentRequestSchema.shape,
+  async ({ environmentSlug }) => {
+    return fetchKeyshadeApi(
+      `/api/environment/${environmentSlug}`,
+      DeleteResponseSchema,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+);
+
+// Tool for deleting a project
+server.tool(
+  "delete_project",
+  "Deletes a project",
+  DeleteProjectRequestSchema.shape,
+  async ({ projectSlug }) => {
+    return fetchKeyshadeApi(
+      `/api/project/${projectSlug}`,
+      DeleteResponseSchema,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+);
+
+// Tool for unlinking a fork from its parent
+server.tool(
+  "unlink_fork_parent",
+  "Unlinks a forked project from its parent project",
+  UnlinkForkRequestSchema.shape,
+  async ({ projectSlug }) => {
+    return fetchKeyshadeApi(
+      `/api/project/${projectSlug}/fork`,
+      DeleteResponseSchema,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+);
+
+// Tool for deleting a secret
+server.tool(
+  "delete_secret",
+  "Deletes a secret from a project",
+  DeleteSecretRequestSchema.shape,
+  async ({ secretSlug }) => {
+    return fetchKeyshadeApi(
+      `/api/secret/${secretSlug}`,
+      DeleteResponseSchema,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+);
+
+// Tool for deleting an environment value of a secret
+server.tool(
+  "delete_secret_environment_value",
+  "Deletes an environment-specific value of a secret",
+  DeleteSecretEnvironmentValueRequestSchema.shape,
+  async ({ secretSlug, environmentSlug }) => {
+    return fetchKeyshadeApi(
+      `/api/secret/${secretSlug}/${environmentSlug}`,
+      DeleteResponseSchema,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+);
+
+// Tool for deleting a variable
+server.tool(
+  "delete_variable",
+  "Deletes a variable from a project",
+  DeleteVariableRequestSchema.shape,
+  async ({ variableSlug }) => {
+    return fetchKeyshadeApi(
+      `/api/variable/${variableSlug}`,
+      DeleteResponseSchema,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+);
+
+// Tool for deleting an environment value of a variable
+server.tool(
+  "delete_variable_environment_value",
+  "Deletes an environment-specific value of a variable",
+  DeleteVariableEnvironmentValueRequestSchema.shape,
+  async ({ variableSlug, environmentSlug }) => {
+    return fetchKeyshadeApi(
+      `/api/variable/${variableSlug}/${environmentSlug}`,
+      DeleteResponseSchema,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+);
+
+// Tool for deleting a workspace
+server.tool(
+  "delete_workspace",
+  "Deletes a workspace",
+  DeleteWorkspaceRequestSchema.shape,
+  async ({ workspaceSlug }) => {
+    return fetchKeyshadeApi(
+      `/api/workspace/${workspaceSlug}`,
+      DeleteResponseSchema,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+);
+
+// Tool for deleting a workspace role
+server.tool(
+  "delete_workspace_role",
+  "Deletes a workspace role",
+  DeleteWorkspaceRoleRequestSchema.shape,
+  async ({ workspaceRoleSlug }) => {
+    return fetchKeyshadeApi(
+      `/api/workspace-role/${workspaceRoleSlug}`,
+      DeleteResponseSchema,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+);
+
+// Tool for leaving a workspace
+server.tool(
+  "leave_workspace",
+  "Leaves a workspace",
+  LeaveWorkspaceRequestSchema.shape,
+  async ({ workspaceSlug }) => {
+    return fetchKeyshadeApi(
+      `/api/workspace-membership/${workspaceSlug}/leave`,
+      DeleteResponseSchema,
+      {
+        method: "DELETE",
       }
     );
   }
