@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/keyshade-xyz-keyshade-mcp-badge.png)](https://mseep.ai/app/keyshade-xyz-keyshade-mcp)
+
 # keyshade-mcp
 This is the official repository of Keyshade MCP Server
 
