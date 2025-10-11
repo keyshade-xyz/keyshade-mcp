@@ -25,17 +25,17 @@
     "sdk",
     "api"
   ],
-  "bin": {
-    "keyshade-mcp": "./build/index.js"
-  },
   "scripts": {
     "build": "tsc && chmod 755 build/index.js"
   },
   "files": [
     "build"
   ],
-  "author": "",
-  "license": "ISC",
+  "bin": {
+    "keyshade-mcp": "./build/index.js"
+  },
+  "author": "Sambit Chakraborty",
+  "license": "MPL-2.0",
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
